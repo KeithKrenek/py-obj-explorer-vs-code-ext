@@ -1,0 +1,60 @@
+{
+  "name": "python-object-path-explorer",
+  "displayName": "Python Object Path Explorer",
+  "description": "Explore Python object structures and get access syntax",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onLanguage:python"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "python-object-explorer.explore",
+        "title": "Explore Object Path",
+        "category": "Python Explorer"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "python-object-explorer.explore",
+        "key": "ctrl+alt+e",
+        "when": "editorTextFocus && editorLangId == python"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "python-object-explorer.explore",
+          "group": "navigation",
+          "when": "editorLangId == python"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "pythonObjectExplorer",
+          "name": "Object Path Explorer",
+          "when": "python-object-explorer.active"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {}
+}

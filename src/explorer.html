@@ -1,0 +1,111 @@
+<!-- webview/explorer.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
+        .tree-node { margin-left: 20px; }
+        .node-header { 
+            cursor: pointer; 
+            padding: 5px;
+            border-left: 3px solid #007acc;
+            margin: 2px 0;
+            background: #f8f8f8;
+        }
+        .node-header:hover { background: #e8e8e8; }
+        .expandable::before { content: "▶ "; }
+        .expanded::before { content: "▼ "; }
+        .node-expr { font-family: 'Courier New', monospace; font-weight: bold; }
+        .node-type { color: #666; font-size: 0.9em; }
+        .node-preview { color: #008000; font-style: italic; }
+        .copy-btn { 
+            background: #007acc; 
+            color: white; 
+            border: none; 
+            padding: 2px 8px; 
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="object-tree"></div>
+    
+    <script>
+        const vscode = acquireVsCodeApi();
+        
+        function createTreeNode(data) {
+            const div = document.createElement('div');
+            div.className = 'tree-node';
+            
+            const header = document.createElement('div');
+            header.className = `node-header ${data.children?.length ? 'expandable' : ''}`;
+            header.innerHTML = `
+                <span class="node-expr">${data.expr}</span>
+                <span class="node-type">(${data.type})</span>
+                <span class="node-preview">: ${data.preview}</span>
+                <button class="copy-btn" onclick="copyExpression('${data.expr}')">Copy</button>
+            `;
+            
+            if (data.children?.length) {
+                header.onclick = () => toggleNode(div, header);
+            }
+            
+            div.appendChild(header);
+            
+            if (data.children?.length) {
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'hidden';
+                
+                data.children.forEach(child => {
+                    childrenContainer.appendChild(createTreeNode(child));
+                });
+                
+                div.appendChild(childrenContainer);
+            }
+            
+            return div;
+        }
+        
+        function toggleNode(nodeDiv, headerDiv) {
+            const childrenDiv = nodeDiv.querySelector('div:last-child');
+            if (childrenDiv.classList.contains('hidden')) {
+                childrenDiv.classList.remove('hidden');
+                headerDiv.classList.remove('expandable');
+                headerDiv.classList.add('expanded');
+            } else {
+                childrenDiv.classList.add('hidden');
+                headerDiv.classList.remove('expanded'); 
+                headerDiv.classList.add('expandable');
+            }
+        }
+        
+        function copyExpression(expr) {
+            navigator.clipboard.writeText(expr).then(() => {
+                // Visual feedback
+                vscode.postMessage({ command: 'copied', text: expr });
+            });
+        }
+        
+        function renderTree(data) {
+            const container = document.getElementById('object-tree');
+            container.innerHTML = '';
+            
+            if (data.error) {
+                container.innerHTML = `<div style="color: red;">Error: ${data.error}</div>`;
+            } else {
+                container.appendChild(createTreeNode(data));
+            }
+        }
+        
+        // Listen for data from extension
+        window.addEventListener('message', event => {
+            const data = event.data;
+            if (data.command === 'showObject') {
+                renderTree(data.objectData);
+            }
+        });
+    </script>
+</body>
+</html>
